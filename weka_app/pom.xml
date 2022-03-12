@@ -12,6 +12,17 @@
 			<artifactId>weka-stable</artifactId>
 			<version>3.8.0</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.jfree/jfreechart -->
+		<dependency>
+			<groupId>org.jfree</groupId>
+			<artifactId>jfreechart</artifactId>
+			<version>1.5.3</version>
+		</dependency>
+		<dependency>
+			<groupId>net.objecthunter</groupId>
+			<artifactId>exp4j</artifactId>
+			<version>0.4.8</version>
+		</dependency>
 	</dependencies>
 
 	<build>

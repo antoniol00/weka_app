@@ -18,9 +18,15 @@ public class Controller implements ActionListener {
 		}
 		if (e.getActionCommand().equals("start")) {
 
+			Worker w = new Worker(panel);
+			w.execute();
+
 		}
 		if (e.getActionCommand().equals("clearLog")) {
 			panel.clearLog();
+		}
+		if (e.getActionCommand().equals("training_set")) {
+			panel.createTrainingSet();
 		}
 
 	}

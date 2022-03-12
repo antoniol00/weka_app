@@ -19,9 +19,6 @@ public class Main {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				JFrame window = new JFrame("MLP Weka App");
-				window.setLocation(0, 0);
-				window.setResizable(true);
-				window.setLocationRelativeTo(null);
 				create(window);
 			}
 		});
