@@ -9,12 +9,12 @@ public class Worker extends SwingWorker<Void, Void> {
 
 	private Panel panel;
 	private Instances training;
-	private Instances test;
+	// private Instances test;
 
 	public Worker(Panel panel, Instances training, Instances test) {
 		this.panel = panel;
 		this.training = training;
-		this.test = test;
+		// this.test = test;
 	}
 
 	@Override
@@ -30,7 +30,7 @@ public class Worker extends SwingWorker<Void, Void> {
 			panel.updateLog("Unexpected error in training set parsing:\n" + e);
 		}
 
-		panel.updateLog(mlpc.get);
+		panel.updateLog(mlpc.toString());
 		return null;
 	}
 

@@ -19,13 +19,13 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 
-public class DrawChart {
+public class DrawPlot {
 
 	private ChartPanel chart;
 	private File myFileTr, myFileTe;
 	private Instances training_instances, test_instances;
 
-	public DrawChart(String function, int training_size, double validation_size, int noise_type_idx, int noise_level)
+	public DrawPlot(String function, int training_size, double validation_size, int noise_type_idx, int noise_level)
 			throws Exception {
 
 		myFileTr = new File("training.arff");

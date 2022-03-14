@@ -143,6 +143,9 @@ public class Panel extends JPanel {
 		aux_result_draw.setLayout(new BorderLayout(0, 0));
 
 		aux_result_draw.add(result_draw);
+
+		noise_type.setModel(new DefaultComboBoxModel<String>(new String[] { "Uniform", "Gaussian" }));
+		mode.setModel(new DefaultComboBoxModel<String>(new String[] { "Complete", "Step by step" }));
 	}
 
 	public void controller(ActionListener ctr) {
@@ -159,9 +162,6 @@ public class Panel extends JPanel {
 	}
 
 	public void openDialogBox() {
-
-		noise_type.setModel(new DefaultComboBoxModel<String>(new String[] { "Uniform", "Gaussian" }));
-		mode.setModel(new DefaultComboBoxModel<String>(new String[] { "Complete", "Step by step" }));
 
 		final JComponent[] inputs = new JComponent[] { new JLabel("Noise Level"), noise_level, new JLabel("Noise type"),
 				noise_type, new JLabel("Training set size"), training_size,
@@ -204,7 +204,8 @@ public class Panel extends JPanel {
 			} else {
 				exp = expression.getText();
 			}
-			DrawChart dc = new DrawChart(exp, Integer.parseInt(training_size.getText()),
+			
+			DrawPlot dc = new DrawPlot(exp, Integer.parseInt(training_size.getText()),
 					Double.parseDouble(test_size.getText()), noise_type.getSelectedIndex(),
 					Integer.parseInt(noise_level.getText()));
 
