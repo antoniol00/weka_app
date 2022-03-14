@@ -1,8 +1,10 @@
 package weka_app;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,19 +22,16 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
-import java.awt.GridLayout;
+
+import weka.core.Instances;
 
 public class Panel extends JPanel {
 	private static final long serialVersionUID = -1240238943911965669L;
 
 	private final JPanel options_panel = new JPanel();
 	private final JTextField expression = new JTextField(20);
-	private final JComboBox<String> comboBox = new JComboBox<String>();
+	private final JComboBox<String> prefixed = new JComboBox<String>();
 	private final JLabel or = new JLabel("or");
 	private final JPanel logPanel = new JPanel();
 	private final JTextArea log = new JTextArea();
@@ -53,6 +52,17 @@ public class Panel extends JPanel {
 	private final JPanel aux_result_draw = new JPanel();
 	private final JPanel training_draw = new JPanel();
 	private final JPanel result_draw = new JPanel();
+	private final JTextField noise_level = new JTextField("10");
+	private final JComboBox<String> noise_type = new JComboBox<String>();
+	private final JTextField hidden_layer_size = new JTextField("2,2");
+	private final JTextField training_size = new JTextField("50");
+	private final JTextField test_size = new JTextField("20");
+	private final JComboBox<String> mode = new JComboBox<String>();
+	private final JTextField number_of_epochs = new JTextField("500");
+	private final JTextField learning_rate = new JTextField("0.3");
+
+	private Instances training_instances;
+	private Instances test_instances;
 
 	public Panel() {
 		setLayout(new BorderLayout(0, 0));
@@ -84,13 +94,14 @@ public class Panel extends JPanel {
 
 		or.setHorizontalAlignment(SwingConstants.CENTER);
 		inputPanel.add(or, BorderLayout.CENTER);
-		comboBox.setModel(new DefaultComboBoxModel<String>(new String[] { "Prefixed functions", "x+1", "2x+3" }));
+		prefixed.setModel(new DefaultComboBoxModel<String>(new String[] { "None (Prefixed functions)", "x^2", "x^3",
+				"x^4", "sin(x)", "tan(x)", "sqrt(x)", "log(x)" }));
 
-		inputPanel.add(comboBox, BorderLayout.SOUTH);
+		inputPanel.add(prefixed, BorderLayout.SOUTH);
 
 		options_panel.add(logPanel, BorderLayout.SOUTH);
 		log.setEditable(false);
-		log.setRows(5);
+		log.setRows(10);
 		log.setColumns(50);
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 		LocalDateTime now = LocalDateTime.now();
@@ -111,8 +122,12 @@ public class Panel extends JPanel {
 
 		start_training.add(create_panel, BorderLayout.CENTER);
 		create_panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+		more.setAlignmentY(Component.TOP_ALIGNMENT);
+		more.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
 		create_panel.add(more);
+		training_set.setAlignmentX(Component.CENTER_ALIGNMENT);
+		training_set.setAlignmentY(Component.BOTTOM_ALIGNMENT);
 
 		create_panel.add(training_set);
 		draw_panel.setPreferredSize(new Dimension(250, 250));
@@ -121,12 +136,12 @@ public class Panel extends JPanel {
 
 		draw_panel.add(aux_training_draw);
 		aux_training_draw.setLayout(new BorderLayout(0, 0));
-		
+
 		aux_training_draw.add(training_draw, BorderLayout.CENTER);
 
 		draw_panel.add(aux_result_draw);
 		aux_result_draw.setLayout(new BorderLayout(0, 0));
-		
+
 		aux_result_draw.add(result_draw);
 	}
 
@@ -139,33 +154,23 @@ public class Panel extends JPanel {
 		clearLog.setActionCommand("clearLog");
 		training_set.addActionListener(ctr);
 		training_set.setActionCommand("training_set");
+		prefixed.addActionListener(ctr);
+		prefixed.setActionCommand("prefixed");
 	}
 
 	public void openDialogBox() {
-		JTextField noise_level = new JTextField();
-		JComboBox<String> noise_type = new JComboBox<String>();
-		noise_type.setModel(new DefaultComboBoxModel<String>(new String[] { "Gaussian", "Uniform" }));
-		JTextField hidden_layer_size = new JTextField();
-		JTextField training_size = new JTextField();
-		JTextField validation_size = new JTextField();
-		JComboBox<String> mode = new JComboBox<String>();
+
+		noise_type.setModel(new DefaultComboBoxModel<String>(new String[] { "Uniform", "Gaussian" }));
 		mode.setModel(new DefaultComboBoxModel<String>(new String[] { "Complete", "Step by step" }));
-		JTextField number_of_steps = new JTextField();
-		JTextField learning_type = new JTextField();
 
 		final JComponent[] inputs = new JComponent[] { new JLabel("Noise Level"), noise_level, new JLabel("Noise type"),
-				noise_type, new JLabel("Hidden layer size"), hidden_layer_size, new JLabel("Training set size"),
-				training_size, new JLabel("Validation set size"), validation_size, new JLabel("Mode"), mode,
-				new JLabel("Number of steps"), number_of_steps, new JLabel("Learning type"), learning_type };
+				noise_type, new JLabel("Training set size"), training_size,
+				new JLabel("Test set size (as a % of training set size)"), test_size, new JLabel("Mode"), mode,
+				new JLabel("Hidden nodes on each layer (separated by commas)"), hidden_layer_size,
+				new JLabel("Number of epochs"), number_of_epochs, new JLabel("Learning rate (0-1.0)"), learning_rate };
 
 		JOptionPane.setDefaultLocale(Locale.ENGLISH);
-		int result = JOptionPane.showConfirmDialog(null, inputs, "More options", JOptionPane.OK_CANCEL_OPTION,
-				JOptionPane.PLAIN_MESSAGE);
-		if (result == 0) {
-			updateLog("Parameters successfully changed");
-		} else {
-			updateLog("No modifications made");
-		}
+		JOptionPane.showConfirmDialog(null, inputs, "More options", JOptionPane.PLAIN_MESSAGE);
 
 	}
 
@@ -179,14 +184,66 @@ public class Panel extends JPanel {
 		log.setText("");
 	}
 
-	public void createTrainingSet() {
-		start.setEnabled(true);
-		
-		DrawChart dc = new DrawChart("Training set",expression.getText(),10);
-		ChartPanel chart = dc.getChart();
-		aux_training_draw.add(chart);
-		aux_training_draw.validate();
-
-		updateLog("training set creado");
+	public void prefixedSelected() {
+		if (prefixed.getSelectedIndex() != 0) {
+			expression.setText("");
+			expression.setEnabled(false);
+		} else {
+			expression.setEnabled(true);
+		}
 	}
+
+	public void createTrainingSet() {
+		aux_training_draw.removeAll();
+		try {
+			String exp = "";
+			if (expression.getText().isEmpty() && prefixed.getSelectedIndex() == 0) {
+				updateLog("Expression field is empty or there is no prefixed function chosen");
+			} else if (prefixed.getSelectedIndex() != 0) {
+				exp = (String) prefixed.getSelectedItem();
+			} else {
+				exp = expression.getText();
+			}
+			DrawChart dc = new DrawChart(exp, Integer.parseInt(training_size.getText()),
+					Double.parseDouble(test_size.getText()), noise_type.getSelectedIndex(),
+					Integer.parseInt(noise_level.getText()));
+
+			ChartPanel chart = dc.getChart();
+			aux_training_draw.add(chart);
+			aux_training_draw.validate();
+			start.setEnabled(true);
+			updateLog("Training set created with " + training_size.getText() + " samples and test set created with "
+					+ ((int) (Integer.parseInt(training_size.getText()) * Double.parseDouble(test_size.getText())
+							/ 100))
+					+ " samples");
+			training_instances = dc.getTrainingInstances();
+			test_instances = dc.getTestInstances();
+
+		} catch (NumberFormatException e) {
+			updateLog("Training size or Test size value is not a number!");
+		} catch (Exception e) {
+			updateLog("Unexpected error");
+		}
+	}
+
+	public Instances getTrainingInstances() {
+		return training_instances;
+	}
+
+	public Instances getTestInstances() {
+		return test_instances;
+	}
+
+	public Double getLearningRate() {
+		return Double.parseDouble(this.learning_rate.getText());
+	}
+
+	public String getHiddenLayers() {
+		return this.hidden_layer_size.getText();
+	}
+
+	public int getTrainingTime() {
+		return Integer.parseInt(this.number_of_epochs.getText());
+	}
+
 }

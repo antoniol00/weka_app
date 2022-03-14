@@ -1,32 +1,36 @@
 package weka_app;
 
-import java.io.FileReader;
-
 import javax.swing.SwingWorker;
 
-import weka.classifiers.Evaluation;
 import weka.classifiers.functions.MultilayerPerceptron;
-import weka.core.Instance;
 import weka.core.Instances;
 
 public class Worker extends SwingWorker<Void, Void> {
 
 	private Panel panel;
+	private Instances training;
+	private Instances test;
 
-	public Worker(Panel panel) {
+	public Worker(Panel panel, Instances training, Instances test) {
 		this.panel = panel;
+		this.training = training;
+		this.test = test;
 	}
 
 	@Override
-	protected Void doInBackground() throws Exception {
+	protected Void doInBackground() {
+		training.setClassIndex(1);
 		MultilayerPerceptron mlpc = new MultilayerPerceptron();
-		Instances instances = new Instances(new FileReader("test.arff"));
-		instances.setClassIndex(1);
-		mlpc.buildClassifier(instances);
-		
-		Evaluation eval = new Evaluation(instances);
-		eval.evaluateModel(	mlpc, instances);
-		panel.updateLog(eval.toSummaryString("\nResults\n======\n", false));
+		try {
+			mlpc.setLearningRate(panel.getLearningRate());
+			mlpc.setHiddenLayers(panel.getHiddenLayers());
+			mlpc.setTrainingTime(panel.getTrainingTime());
+			mlpc.buildClassifier(training);
+		} catch (Exception e) {
+			panel.updateLog("Unexpected error in training set parsing:\n" + e);
+		}
+
+		panel.updateLog(mlpc.get);
 		return null;
 	}
 
