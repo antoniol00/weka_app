@@ -5,14 +5,17 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>weka_app</name>
 
+	<properties>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>1.8</maven.compiler.source>
+	</properties>
+
 	<dependencies>
-		<!-- https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-stable -->
 		<dependency>
 			<groupId>nz.ac.waikato.cms.weka</groupId>
 			<artifactId>weka-stable</artifactId>
 			<version>3.8.0</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.jfree/jfreechart -->
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
@@ -38,21 +41,6 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<classpathPrefix>libs/</classpathPrefix>
-							<mainClass>
-                    com.baeldung.executable.ExecutableMavenJar
-                </mainClass>
-						</manifest>
-					</archive>
 				</configuration>
 			</plugin>
 		</plugins>

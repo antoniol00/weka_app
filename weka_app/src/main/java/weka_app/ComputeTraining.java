@@ -96,6 +96,8 @@ public class ComputeTraining {
 		scatterPlot.getTitle().setFont(new Font("Tahoma", Font.PLAIN, 20));
 		chart = new ChartPanel(scatterPlot);
 		chart.setMouseWheelEnabled(true);
+		myFileTr.delete();
+		myFileTe.delete();
 	}
 
 	public ChartPanel getChart() {

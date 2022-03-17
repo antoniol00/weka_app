@@ -1,4 +1,0 @@
-@relation 'function'
-@attribute x NUMERIC
-@attribute y NUMERIC
-@data
