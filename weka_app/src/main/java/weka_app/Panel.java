@@ -24,6 +24,7 @@ import javax.swing.SwingConstants;
 
 import org.jfree.chart.ChartPanel;
 
+import weka.classifiers.functions.MultilayerPerceptron;
 import weka.core.Instances;
 
 public class Panel extends JPanel {
@@ -52,10 +53,10 @@ public class Panel extends JPanel {
 	private final JPanel aux_result_draw = new JPanel();
 	private final JPanel training_draw = new JPanel();
 	private final JPanel result_draw = new JPanel();
-	private final JTextField noise_level = new JTextField("10");
+	private final JTextField noise_level = new JTextField("0");
 	private final JComboBox<String> noise_type = new JComboBox<String>();
-	private final JTextField hidden_layer_size = new JTextField("2,2");
-	private final JTextField training_size = new JTextField("50");
+	private final JTextField hidden_layer_size = new JTextField("a");
+	private final JTextField training_size = new JTextField("100");
 	private final JTextField test_size = new JTextField("20");
 	private final JComboBox<String> mode = new JComboBox<String>();
 	private final JTextField number_of_epochs = new JTextField("500");
@@ -63,6 +64,8 @@ public class Panel extends JPanel {
 
 	private Instances training_instances;
 	private Instances test_instances;
+	private MultilayerPerceptron mlp;
+	private double[] max_base_values;
 
 	public Panel() {
 		setLayout(new BorderLayout(0, 0));
@@ -204,8 +207,8 @@ public class Panel extends JPanel {
 			} else {
 				exp = expression.getText();
 			}
-			
-			DrawPlot dc = new DrawPlot(exp, Integer.parseInt(training_size.getText()),
+
+			ComputeTraining dc = new ComputeTraining(exp, Integer.parseInt(training_size.getText()),
 					Double.parseDouble(test_size.getText()), noise_type.getSelectedIndex(),
 					Integer.parseInt(noise_level.getText()));
 
@@ -219,6 +222,7 @@ public class Panel extends JPanel {
 					+ " samples");
 			training_instances = dc.getTrainingInstances();
 			test_instances = dc.getTestInstances();
+			max_base_values = dc.getMax_base_values();
 
 		} catch (NumberFormatException e) {
 			updateLog("Training size or Test size value is not a number!");
@@ -245,6 +249,32 @@ public class Panel extends JPanel {
 
 	public int getTrainingTime() {
 		return Integer.parseInt(this.number_of_epochs.getText());
+	}
+
+	public void createResult() {
+		aux_result_draw.removeAll();
+		try {
+			ComputeResult dr = new ComputeResult(mlp, training_instances, max_base_values,this);
+			ChartPanel chart = dr.getChart();
+			aux_result_draw.add(chart);
+			aux_result_draw.validate();
+			updateLog("Result set created");
+		} catch (Exception e) {
+			updateLog("Unexpected error");
+		}
+	}
+
+	public void setPerceptron(MultilayerPerceptron multilayerPerceptron) {
+		this.mlp = multilayerPerceptron;
+
+	}
+	
+	public String getExpression() {
+		if(expression.getText().isEmpty()) {
+			return (String) prefixed.getSelectedItem();
+		}else {
+			return expression.getText();
+		}
 	}
 
 }

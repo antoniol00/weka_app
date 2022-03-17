@@ -19,14 +19,15 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 
-public class DrawPlot {
+public class ComputeTraining {
 
 	private ChartPanel chart;
 	private File myFileTr, myFileTe;
 	private Instances training_instances, test_instances;
+	private double[] max_base_values;
 
-	public DrawPlot(String function, int training_size, double validation_size, int noise_type_idx, int noise_level)
-			throws Exception {
+	public ComputeTraining(String function, int training_size, double validation_size, int noise_type_idx,
+			int noise_level) throws Exception {
 
 		myFileTr = new File("training.arff");
 		if (myFileTr.createNewFile()) {
@@ -54,6 +55,8 @@ public class DrawPlot {
 		Random r = new Random();
 		double val_size = training_size * validation_size / 100;
 
+		max_base_values = new double[] { 0, 100 };
+
 		for (int x = 0; x < training_size; x++) {
 			double x_val = -10 + r.nextDouble() * 20;
 			Expression expression = new ExpressionBuilder(function).variable("x").build().setVariable("x", x_val);
@@ -65,6 +68,13 @@ public class DrawPlot {
 			inst.setValue(0, x_val);
 			inst.setValue(1, y_val);
 			training_instances.add(inst);
+
+			if (y_val > max_base_values[0]) {
+				max_base_values[0] = y_val;
+			}
+			if (y_val < max_base_values[1]) {
+				max_base_values[1] = y_val;
+			}
 		}
 		for (int x = 0; x < val_size; x++) {
 			double x_val = -10 + r.nextDouble() * 20;
@@ -107,6 +117,10 @@ public class DrawPlot {
 
 	public Instances getTestInstances() {
 		return test_instances;
+	}
+
+	public double[] getMax_base_values() {
+		return max_base_values;
 	}
 
 }

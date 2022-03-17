@@ -2,6 +2,7 @@ package weka_app;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ExecutionException;
 
 public class Controller implements ActionListener {
 
@@ -16,8 +17,15 @@ public class Controller implements ActionListener {
 			panel.openDialogBox();
 		}
 		if (e.getActionCommand().equals("start")) {
-			Worker w = new Worker(panel,panel.getTrainingInstances(),panel.getTestInstances());
+			Worker w = new Worker(panel, panel.getTrainingInstances(), panel.getTestInstances());
 			w.execute();
+			try {
+				panel.setPerceptron(w.get());
+				panel.createResult();
+			} catch (InterruptedException | ExecutionException x) {
+
+				x.printStackTrace();
+			}
 		}
 		if (e.getActionCommand().equals("clearLog")) {
 			panel.clearLog();

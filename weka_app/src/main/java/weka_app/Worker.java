@@ -5,7 +5,7 @@ import javax.swing.SwingWorker;
 import weka.classifiers.functions.MultilayerPerceptron;
 import weka.core.Instances;
 
-public class Worker extends SwingWorker<Void, Void> {
+public class Worker extends SwingWorker<MultilayerPerceptron, Void> {
 
 	private Panel panel;
 	private Instances training;
@@ -18,7 +18,7 @@ public class Worker extends SwingWorker<Void, Void> {
 	}
 
 	@Override
-	protected Void doInBackground() {
+	protected MultilayerPerceptron doInBackground() throws Exception {
 		training.setClassIndex(1);
 		MultilayerPerceptron mlpc = new MultilayerPerceptron();
 		try {
@@ -26,12 +26,11 @@ public class Worker extends SwingWorker<Void, Void> {
 			mlpc.setHiddenLayers(panel.getHiddenLayers());
 			mlpc.setTrainingTime(panel.getTrainingTime());
 			mlpc.buildClassifier(training);
+
 		} catch (Exception e) {
 			panel.updateLog("Unexpected error in training set parsing:\n" + e);
 		}
-
-		panel.updateLog(mlpc.toString());
-		return null;
+		return mlpc;
 	}
 
 }
