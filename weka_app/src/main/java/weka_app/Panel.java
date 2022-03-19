@@ -1,11 +1,14 @@
 package weka_app;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -17,6 +20,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -61,11 +65,11 @@ public class Panel extends JPanel {
 	private final JComboBox<String> mode = new JComboBox<String>();
 	private final JTextField number_of_epochs = new JTextField("500");
 	private final JTextField learning_rate = new JTextField("0.3");
+	private final JButton stop = new JButton("STOP");
+	private final JProgressBar progressBar = new JProgressBar();
 
 	private Instances training_instances;
 	private Instances test_instances;
-	private MultilayerPerceptron mlp;
-	private double[] max_base_values;
 
 	public Panel() {
 		setLayout(new BorderLayout(0, 0));
@@ -81,6 +85,9 @@ public class Panel extends JPanel {
 		start.setEnabled(false);
 
 		start_panel.add(start);
+		stop.setEnabled(false);
+
+		start_panel.add(stop);
 
 		buttonsPanel.add(aux_panel_1, BorderLayout.NORTH);
 
@@ -112,9 +119,18 @@ public class Panel extends JPanel {
 		log.setText(dtf.format(now) + " : App launched");
 		JScrollPane scrollPane = new JScrollPane(log);
 		scrollPane.setHorizontalScrollBar(null);
+		scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+			public void adjustmentValueChanged(AdjustmentEvent e) {
+				e.getAdjustable().setValue(e.getAdjustable().getMaximum());
+			}
+		});
 		logPanel.add(scrollPane, BorderLayout.NORTH);
 
-		logPanel.add(aux_panel_2, BorderLayout.SOUTH);
+		logPanel.add(aux_panel_2, BorderLayout.CENTER);
+		aux_panel_2.setLayout(new BorderLayout(0, 0));
+
+		progressBar.setStringPainted(true);
+		aux_panel_2.add(progressBar);
 
 		options_panel.add(start_training, BorderLayout.CENTER);
 		start_training.setLayout(new BorderLayout(0, 0));
@@ -156,6 +172,8 @@ public class Panel extends JPanel {
 		more.setActionCommand("more");
 		start.addActionListener(ctr);
 		start.setActionCommand("start");
+		stop.addActionListener(ctr);
+		stop.setActionCommand("stop");
 		clearLog.addActionListener(ctr);
 		clearLog.setActionCommand("clearLog");
 		training_set.addActionListener(ctr);
@@ -166,8 +184,8 @@ public class Panel extends JPanel {
 
 	public void openDialogBox() {
 
-		final JComponent[] inputs = new JComponent[] { new JLabel("Noise Level"), noise_level, new JLabel("Noise type"),
-				noise_type, new JLabel("Training set size"), training_size,
+		final JComponent[] inputs = new JComponent[] { new JLabel("Noise Level (Integer greater than 0)"), noise_level,
+				new JLabel("Noise type"), noise_type, new JLabel("Training set size"), training_size,
 				new JLabel("Test set size (as a % of training set size)"), test_size, new JLabel("Mode"), mode,
 				new JLabel("Hidden nodes on each layer (separated by commas)"), hidden_layer_size,
 				new JLabel("Number of epochs"), number_of_epochs, new JLabel("Learning rate (0-1.0)"), learning_rate };
@@ -181,6 +199,12 @@ public class Panel extends JPanel {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 		LocalDateTime now = LocalDateTime.now();
 		log.setText(log.getText() + "\n" + dtf.format(now) + " : " + update);
+	}
+
+	public void updateError(String error) {
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+		LocalDateTime now = LocalDateTime.now();
+		log.setText(log.getText() + "\n" + dtf.format(now) + " : " + "ERROR - " + error);
 	}
 
 	public void clearLog() {
@@ -222,12 +246,11 @@ public class Panel extends JPanel {
 					+ " samples");
 			training_instances = dc.getTrainingInstances();
 			test_instances = dc.getTestInstances();
-			max_base_values = dc.getMax_base_values();
 
 		} catch (NumberFormatException e) {
-			updateLog("Training size or Test size value is not a number!");
-		} catch (Exception e) {
-			updateLog("Unexpected error");
+			updateError("Some parameters are not correctly specified. Check for spelling errors");
+		} catch (WekaException e) {
+			updateError(e.getMessage());
 		}
 	}
 
@@ -251,30 +274,44 @@ public class Panel extends JPanel {
 		return Integer.parseInt(this.number_of_epochs.getText());
 	}
 
-	public void createResult() {
+	public void createResult(MultilayerPerceptron mlp) {
 		aux_result_draw.removeAll();
 		try {
-			ComputeResult dr = new ComputeResult(mlp, training_instances, max_base_values,this);
+			ComputeResult dr = new ComputeResult(mlp, training_instances, this);
 			ChartPanel chart = dr.getChart();
 			aux_result_draw.add(chart);
 			aux_result_draw.validate();
-			updateLog("Result set created");
 		} catch (Exception e) {
-			updateLog("Unexpected error");
+			updateError("Error detected in plotting result graphs");
 		}
 	}
 
-	public void setPerceptron(MultilayerPerceptron multilayerPerceptron) {
-		this.mlp = multilayerPerceptron;
-
-	}
-	
 	public String getExpression() {
-		if(expression.getText().isEmpty()) {
+		if (expression.getText().isEmpty()) {
 			return (String) prefixed.getSelectedItem();
-		}else {
+		} else {
 			return expression.getText();
 		}
+	}
+
+	public boolean isComplete() {
+		return mode.getSelectedIndex() == 0 ? true : false;
+	}
+
+	public JButton getStopButton() {
+		return this.stop;
+	}
+	
+	public JButton getStartButton() {
+		return this.start;
+	}
+
+	public void setProgress(int n) {
+		progressBar.setValue(n);
+		if (n == 100)
+			progressBar.setForeground(Color.GREEN);
+		else
+			progressBar.setForeground(Color.ORANGE);
 	}
 
 }

@@ -19,15 +19,14 @@ public class ComputeResult {
 
 	private ChartPanel chart;
 
-	public ComputeResult(MultilayerPerceptron mlp, Instances i, double[] max_base_values, Panel panel)
-			throws Exception {
+	public ComputeResult(MultilayerPerceptron mlp, Instances i, Panel panel) throws Exception {
 
 		XYSeriesCollection dataset = new XYSeriesCollection();
 
 		XYSeries result_values = new XYSeries("Result values");
 		XYSeries real_values = new XYSeries("Real values");
 
-		for (double x = -10; x <= 10; x += 0.01) {
+		for (double x = -10; x <= 10; x += 0.5) {
 			Instance inst = new DenseInstance(2);
 			inst.setValue(0, x);
 			i.add(inst);
@@ -35,18 +34,20 @@ public class ComputeResult {
 			double y = mlp.classifyInstance(i.lastInstance());
 			result_values.add(x, y);
 		}
-		
-		for (double x = -10; x <= 10; x += 0.01) {
-			if(panel.getExpression().isEmpty()) {
-				Expression expression = new ExpressionBuilder(panel.getExpression()).variable("x").build().setVariable("x", x);
+
+		for (double x = -10; x <= 10; x += 0.5) {
+			if (panel.getExpression().isEmpty()) {
+				Expression expression = new ExpressionBuilder(panel.getExpression()).variable("x").build()
+						.setVariable("x", x);
 				double y = expression.evaluate();
 				real_values.add(x, y);
-			}else {
-				Expression expression = new ExpressionBuilder(panel.getExpression()).variable("x").build().setVariable("x", x);
+			} else {
+				Expression expression = new ExpressionBuilder(panel.getExpression()).variable("x").build()
+						.setVariable("x", x);
 				double y = expression.evaluate();
 				real_values.add(x, y);
 			}
-			
+
 		}
 
 		dataset.addSeries(result_values);

@@ -24,28 +24,34 @@ public class ComputeTraining {
 	private ChartPanel chart;
 	private File myFileTr, myFileTe;
 	private Instances training_instances, test_instances;
-	private double[] max_base_values;
 
 	public ComputeTraining(String function, int training_size, double validation_size, int noise_type_idx,
-			int noise_level) throws Exception {
+			int noise_level) throws WekaException {
 
-		myFileTr = new File("training.arff");
-		if (myFileTr.createNewFile()) {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(myFileTr));
-			writer.write("@relation 'function'\n@attribute x NUMERIC\n@attribute y NUMERIC\n@data");
-			writer.close();
-		}
-		myFileTe = new File("test.arff");
-		if (myFileTe.createNewFile()) {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(myFileTe));
-			writer.write("@relation 'function'\n@attribute x NUMERIC\n@attribute y NUMERIC\n@data");
-			writer.close();
-		}
+		try {
+			myFileTr = new File("training.arff");
+			myFileTr.deleteOnExit();
+			if (myFileTr.createNewFile()) {
+				BufferedWriter writer = new BufferedWriter(new FileWriter(myFileTr));
+				writer.write("@relation 'function'\n@attribute x NUMERIC\n@attribute y NUMERIC\n@data");
+				writer.close();
+			}
+			myFileTe = new File("test.arff");
+			myFileTe.deleteOnExit();
+			if (myFileTe.createNewFile()) {
+				BufferedWriter writer = new BufferedWriter(new FileWriter(myFileTe));
+				writer.write("@relation 'function'\n@attribute x NUMERIC\n@attribute y NUMERIC\n@data");
+				writer.close();
+			}
 
-		DataSource sourceT = new DataSource(myFileTr.getAbsolutePath());
-		training_instances = sourceT.getDataSet();
-		DataSource source = new DataSource(myFileTe.getAbsolutePath());
-		test_instances = source.getDataSet();
+			DataSource sourceT = new DataSource(myFileTr.getAbsolutePath());
+			training_instances = sourceT.getDataSet();
+			DataSource source = new DataSource(myFileTe.getAbsolutePath());
+			test_instances = source.getDataSet();
+
+		} catch (Exception e) {
+			throw new WekaException("File management error, check writing permission in this folder");
+		}
 
 		XYSeriesCollection dataset = new XYSeriesCollection();
 
@@ -55,26 +61,23 @@ public class ComputeTraining {
 		Random r = new Random();
 		double val_size = training_size * validation_size / 100;
 
-		max_base_values = new double[] { 0, 100 };
-
 		for (int x = 0; x < training_size; x++) {
-			double x_val = -10 + r.nextDouble() * 20;
-			Expression expression = new ExpressionBuilder(function).variable("x").build().setVariable("x", x_val);
-			double y_val = expression.evaluate();
-			y_val = addNoise(y_val, noise_type_idx, noise_level);
-			training_values.add(x_val, y_val);
+			try {
+				double x_val = -10 + r.nextDouble() * 20;
+				Expression expression = new ExpressionBuilder(function).variable("x").build().setVariable("x", x_val);
+				double y_val = expression.evaluate();
+				y_val = addNoise(y_val, noise_type_idx, noise_level);
+				training_values.add(x_val, y_val);
 
-			Instance inst = new DenseInstance(2);
-			inst.setValue(0, x_val);
-			inst.setValue(1, y_val);
-			training_instances.add(inst);
+				Instance inst = new DenseInstance(2);
+				inst.setValue(0, x_val);
+				inst.setValue(1, y_val);
+				training_instances.add(inst);
 
-			if (y_val > max_base_values[0]) {
-				max_base_values[0] = y_val;
+			} catch (Exception e) {
+				throw new WekaException("Expression not correctly build. Example: 3x^2+log(x)");
 			}
-			if (y_val < max_base_values[1]) {
-				max_base_values[1] = y_val;
-			}
+
 		}
 		for (int x = 0; x < val_size; x++) {
 			double x_val = -10 + r.nextDouble() * 20;
@@ -96,8 +99,6 @@ public class ComputeTraining {
 		scatterPlot.getTitle().setFont(new Font("Tahoma", Font.PLAIN, 20));
 		chart = new ChartPanel(scatterPlot);
 		chart.setMouseWheelEnabled(true);
-		myFileTr.delete();
-		myFileTe.delete();
 	}
 
 	public ChartPanel getChart() {
@@ -105,6 +106,9 @@ public class ComputeTraining {
 	}
 
 	private double addNoise(double y_val, int idx, int level) {
+		if (level < 0) {
+			throw new WekaException("Noise level should be an integer greater than 0");
+		}
 		Random r = new Random();
 		if (idx == 0) {
 			return y_val + (-1 + r.nextDouble() * 2) * level;
@@ -119,10 +123,6 @@ public class ComputeTraining {
 
 	public Instances getTestInstances() {
 		return test_instances;
-	}
-
-	public double[] getMax_base_values() {
-		return max_base_values;
 	}
 
 }
