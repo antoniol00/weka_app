@@ -11,14 +11,11 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -57,19 +54,13 @@ public class Panel extends JPanel {
 	private final JPanel aux_result_draw = new JPanel();
 	private final JPanel training_draw = new JPanel();
 	private final JPanel result_draw = new JPanel();
-	private final JTextField noise_level = new JTextField("0");
-	private final JComboBox<String> noise_type = new JComboBox<String>();
-	private final JTextField hidden_layer_size = new JTextField("a");
-	private final JTextField training_size = new JTextField("100");
-	private final JTextField test_size = new JTextField("20");
-	private final JComboBox<String> mode = new JComboBox<String>();
-	private final JTextField number_of_epochs = new JTextField("500");
-	private final JTextField learning_rate = new JTextField("0.3");
 	private final JButton stop = new JButton("STOP");
 	private final JProgressBar progressBar = new JProgressBar();
 
 	private Instances training_instances;
 	private Instances test_instances;
+	double[] domain_values;
+	private DialogBox db = new DialogBox();
 
 	public Panel() {
 		setLayout(new BorderLayout(0, 0));
@@ -113,10 +104,7 @@ public class Panel extends JPanel {
 		log.setEditable(false);
 		log.setRows(10);
 		log.setColumns(50);
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-		LocalDateTime now = LocalDateTime.now();
 		logPanel.setLayout(new BorderLayout(0, 0));
-		log.setText(dtf.format(now) + " : App launched");
 		JScrollPane scrollPane = new JScrollPane(log);
 		scrollPane.setHorizontalScrollBar(null);
 		scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
@@ -163,8 +151,6 @@ public class Panel extends JPanel {
 
 		aux_result_draw.add(result_draw);
 
-		noise_type.setModel(new DefaultComboBoxModel<String>(new String[] { "Uniform", "Gaussian" }));
-		mode.setModel(new DefaultComboBoxModel<String>(new String[] { "Complete", "Step by step" }));
 	}
 
 	public void controller(ActionListener ctr) {
@@ -183,28 +169,19 @@ public class Panel extends JPanel {
 	}
 
 	public void openDialogBox() {
-
-		final JComponent[] inputs = new JComponent[] { new JLabel("Noise Level (Integer greater than 0)"), noise_level,
-				new JLabel("Noise type"), noise_type, new JLabel("Training set size"), training_size,
-				new JLabel("Test set size (as a % of training set size)"), test_size, new JLabel("Mode"), mode,
-				new JLabel("Hidden nodes on each layer (separated by commas)"), hidden_layer_size,
-				new JLabel("Number of epochs"), number_of_epochs, new JLabel("Learning rate (0-1.0)"), learning_rate };
-
-		JOptionPane.setDefaultLocale(Locale.ENGLISH);
-		JOptionPane.showConfirmDialog(null, inputs, "More options", JOptionPane.PLAIN_MESSAGE);
-
+		db.showDialogBox();
 	}
 
 	public void updateLog(String update) {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 		LocalDateTime now = LocalDateTime.now();
-		log.setText(log.getText() + "\n" + dtf.format(now) + " : " + update);
+		log.setText(log.getText() + dtf.format(now) + " : " + update + "\n");
 	}
 
 	public void updateError(String error) {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 		LocalDateTime now = LocalDateTime.now();
-		log.setText(log.getText() + "\n" + dtf.format(now) + " : " + "ERROR - " + error);
+		log.setText(log.getText() + dtf.format(now) + " : " + "ERROR - " + error + "\n");
 	}
 
 	public void clearLog() {
@@ -225,32 +202,49 @@ public class Panel extends JPanel {
 		try {
 			String exp = "";
 			if (expression.getText().isEmpty() && prefixed.getSelectedIndex() == 0) {
-				updateLog("Expression field is empty or there is no prefixed function chosen");
+				throw new WekaException("Expression field is empty or there is no prefixed function chosen");
 			} else if (prefixed.getSelectedIndex() != 0) {
 				exp = (String) prefixed.getSelectedItem();
 			} else {
 				exp = expression.getText();
 			}
 
-			ComputeTraining dc = new ComputeTraining(exp, Integer.parseInt(training_size.getText()),
-					Double.parseDouble(test_size.getText()), noise_type.getSelectedIndex(),
-					Integer.parseInt(noise_level.getText()));
+			String[] domainS = db.getDomain().split("[,]");
+			domain_values = new double[] { Double.parseDouble(domainS[0]), Double.parseDouble(domainS[1]) };
+
+			if (domain_values[1] < domain_values[0])
+				throw new WekaException("X domain values are not correctly specified");
+
+			ComputeTraining dc = new ComputeTraining(exp, Integer.parseInt(db.getTraining_size()),
+					Double.parseDouble(db.getTest_size()), db.getNoise_type(), Double.parseDouble(db.getNoise_level()),
+					domain_values);
 
 			ChartPanel chart = dc.getChart();
 			aux_training_draw.add(chart);
 			aux_training_draw.validate();
 			start.setEnabled(true);
-			updateLog("Training set created with " + training_size.getText() + " samples and test set created with "
-					+ ((int) (Integer.parseInt(training_size.getText()) * Double.parseDouble(test_size.getText())
-							/ 100))
+			updateLog("Training set created with " + db.getTraining_size() + " samples and test set created with "
+					+ ((int) (Integer.parseInt(db.getTraining_size()) * Double.parseDouble(db.getTest_size()) / 100))
 					+ " samples");
 			training_instances = dc.getTrainingInstances();
 			test_instances = dc.getTestInstances();
 
 		} catch (NumberFormatException e) {
-			updateError("Some parameters are not correctly specified. Check for spelling errors");
+			updateError("Some parameters are not correctly specified. Check for spelling errors or see Help");
 		} catch (WekaException e) {
 			updateError(e.getMessage());
+		}
+	}
+
+	public void createResult(MultilayerPerceptron mlp) {
+		aux_result_draw.removeAll();
+		try {
+			ComputeResult dr = new ComputeResult(mlp, training_instances, domain_values, getExpression());
+			ChartPanel chart = dr.getChart();
+			aux_result_draw.add(chart);
+			aux_result_draw.validate();
+		} catch (Exception e) {
+			updateError("Error detected in plotting result graphs");
 		}
 	}
 
@@ -263,27 +257,15 @@ public class Panel extends JPanel {
 	}
 
 	public Double getLearningRate() {
-		return Double.parseDouble(this.learning_rate.getText());
+		return Double.parseDouble(db.getLearning_rate());
 	}
 
 	public String getHiddenLayers() {
-		return this.hidden_layer_size.getText();
+		return db.getHidden_layer_size();
 	}
 
 	public int getTrainingTime() {
-		return Integer.parseInt(this.number_of_epochs.getText());
-	}
-
-	public void createResult(MultilayerPerceptron mlp) {
-		aux_result_draw.removeAll();
-		try {
-			ComputeResult dr = new ComputeResult(mlp, training_instances, this);
-			ChartPanel chart = dr.getChart();
-			aux_result_draw.add(chart);
-			aux_result_draw.validate();
-		} catch (Exception e) {
-			updateError("Error detected in plotting result graphs");
-		}
+		return Integer.parseInt(db.getNumber_of_epochs());
 	}
 
 	public String getExpression() {
@@ -295,23 +277,27 @@ public class Panel extends JPanel {
 	}
 
 	public boolean isComplete() {
-		return mode.getSelectedIndex() == 0 ? true : false;
+		return db.getMode().getSelectedIndex() == 0 ? true : false;
 	}
 
 	public JButton getStopButton() {
 		return this.stop;
 	}
-	
+
 	public JButton getStartButton() {
 		return this.start;
 	}
 
-	public void setProgress(int n) {
+	public void setProgress(int n, boolean stop) {
 		progressBar.setValue(n);
-		if (n == 100)
-			progressBar.setForeground(Color.GREEN);
-		else
-			progressBar.setForeground(Color.ORANGE);
+		if (stop) {
+			progressBar.setForeground(Color.RED);
+		} else {
+			if (n == 100)
+				progressBar.setForeground(Color.GREEN);
+			else
+				progressBar.setForeground(Color.ORANGE);
+		}
 	}
 
 }

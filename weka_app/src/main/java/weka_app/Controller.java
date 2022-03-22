@@ -31,6 +31,7 @@ public class Controller implements ActionListener, PropertyChangeListener {
 		case "stop":
 			w.cancel(true);
 			panel.getStopButton().setEnabled(false);
+			panel.setProgress(100,true);
 			break;
 		case "clearLog":
 			panel.clearLog();
@@ -48,7 +49,7 @@ public class Controller implements ActionListener, PropertyChangeListener {
 	public void propertyChange(PropertyChangeEvent evt) {
 		switch (evt.getPropertyName()) {
 		case "progress":
-			panel.setProgress((Integer) evt.getNewValue());
+			panel.setProgress((Integer) evt.getNewValue(),false);
 			break;
 		}
 	}

@@ -1,6 +1,8 @@
 package weka_app;
 
+import java.awt.Color;
 import java.awt.Font;
+import java.awt.geom.Rectangle2D;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -26,7 +28,7 @@ public class ComputeTraining {
 	private Instances training_instances, test_instances;
 
 	public ComputeTraining(String function, int training_size, double validation_size, int noise_type_idx,
-			int noise_level) throws WekaException {
+			double noise_level, double[] domain) throws WekaException {
 
 		try {
 			myFileTr = new File("training.arff");
@@ -63,7 +65,7 @@ public class ComputeTraining {
 
 		for (int x = 0; x < training_size; x++) {
 			try {
-				double x_val = -10 + r.nextDouble() * 20;
+				double x_val = domain[0] + r.nextDouble() * (domain[1] - domain[0]);
 				Expression expression = new ExpressionBuilder(function).variable("x").build().setVariable("x", x_val);
 				double y_val = expression.evaluate();
 				y_val = addNoise(y_val, noise_type_idx, noise_level);
@@ -75,12 +77,12 @@ public class ComputeTraining {
 				training_instances.add(inst);
 
 			} catch (Exception e) {
-				throw new WekaException("Expression not correctly build. Example: 3x^2+log(x)");
+				throw new WekaException("Expression not correctly build. See help");
 			}
 
 		}
 		for (int x = 0; x < val_size; x++) {
-			double x_val = -10 + r.nextDouble() * 20;
+			double x_val = domain[0] + r.nextDouble() * (domain[1] - domain[0]);
 			Expression expression = new ExpressionBuilder(function).variable("x").build().setVariable("x", x_val);
 			double y_val = expression.evaluate();
 			y_val = addNoise(y_val, noise_type_idx, noise_level);
@@ -97,6 +99,10 @@ public class ComputeTraining {
 
 		JFreeChart scatterPlot = ChartFactory.createScatterPlot("Training and Testing sets", "x", "y", dataset);
 		scatterPlot.getTitle().setFont(new Font("Tahoma", Font.PLAIN, 20));
+		scatterPlot.getXYPlot().getRenderer().setSeriesShape(0, new Rectangle2D.Float(0, 0, 4, 4));
+		scatterPlot.getXYPlot().getRenderer().setSeriesShape(1, new Rectangle2D.Float(0, 0, 4, 4));
+		scatterPlot.getXYPlot().getRenderer().setSeriesPaint(0, Color.MAGENTA);
+		scatterPlot.getXYPlot().getRenderer().setSeriesPaint(1, Color.GREEN);
 		chart = new ChartPanel(scatterPlot);
 		chart.setMouseWheelEnabled(true);
 	}
@@ -105,7 +111,7 @@ public class ComputeTraining {
 		return chart;
 	}
 
-	private double addNoise(double y_val, int idx, int level) {
+	private double addNoise(double y_val, int idx, double level) {
 		if (level < 0) {
 			throw new WekaException("Noise level should be an integer greater than 0");
 		}
