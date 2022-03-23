@@ -31,14 +31,14 @@ public class ComputeTraining {
 			double noise_level, double[] domain) throws WekaException {
 
 		try {
-			myFileTr = new File("training.arff");
+			myFileTr = new File(".training.arff");
 			myFileTr.deleteOnExit();
 			if (myFileTr.createNewFile()) {
 				BufferedWriter writer = new BufferedWriter(new FileWriter(myFileTr));
 				writer.write("@relation 'function'\n@attribute x NUMERIC\n@attribute y NUMERIC\n@data");
 				writer.close();
 			}
-			myFileTe = new File("test.arff");
+			myFileTe = new File(".test.arff");
 			myFileTe.deleteOnExit();
 			if (myFileTe.createNewFile()) {
 				BufferedWriter writer = new BufferedWriter(new FileWriter(myFileTe));

@@ -49,11 +49,12 @@ public class Worker extends SwingWorker<Void, Void> {
 					e.evaluateModel(mlpc, test);
 					Evaluation et = new Evaluation(training);
 					et.evaluateModel(mlpc, training);
-					panel.updateLog("\n ======= EVALUATION RESULTS ITERATION " + x
-							+ "=======\nUsing test case:\n\tTotal instances: " + e.numInstances()
-							+ "\tRoot mean squared error: " + e.rootMeanSquaredError()
-							+ "\nUsing training case:\n\tTotal instances: " + et.numInstances()
-							+ "\tRoot mean squared error: " + et.rootMeanSquaredError());
+					panel.updateLog("\n ======= EVALUATION RESULTS ITERATION " + x + "=======\nUsing test set ("
+							+ e.numInstances() + " instances):\n" + "\tRoot mean squared error: "
+							+ e.rootMeanSquaredError() + "\n\tMean Absolute error: " + e.meanAbsoluteError()
+							+ "\nUsing training set (" + et.numInstances() + " instances):\n"
+							+ "\tRoot mean squared error: " + et.rootMeanSquaredError() + "\n\tMean Absolute error: "
+							+ et.meanAbsoluteError());
 					this.setProgress(x * 100 / mlpc.getTrainingTime());
 					x++;
 					Thread.sleep(sleep);
@@ -65,10 +66,11 @@ public class Worker extends SwingWorker<Void, Void> {
 				e.evaluateModel(mlpc, test);
 				Evaluation et = new Evaluation(training);
 				et.evaluateModel(mlpc, training);
-				panel.updateLog("\n ======= EVALUATION RESULTS =======\nUsing test case:\n\tTotal instances: "
-						+ e.numInstances() + "\n\tRoot mean squared error: " + e.rootMeanSquaredError()
-						+ "\nUsing training case:\n\tTotal instances: " + et.numInstances()
-						+ "\n\tRoot mean squared error: " + et.rootMeanSquaredError());
+				panel.updateLog("\n ======= EVALUATION RESULTS =======\n" + "Using test set (" + e.numInstances()
+						+ " instances):" + "\n\tRoot mean squared error: " + e.rootMeanSquaredError()
+						+ "\n\tMean Absolute error: " + e.meanAbsoluteError() + "\nUsing training set ("
+						+ et.numInstances() + " instances):" + "\n\tRoot mean squared error: "
+						+ et.rootMeanSquaredError() + "\n\tMean Absolute error: " + et.meanAbsoluteError());
 				panel.createResult(mlpc);
 				this.setProgress(100);
 			}

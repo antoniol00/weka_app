@@ -102,7 +102,8 @@ public class DialogBox {
 						+ "\n===== REGRESSION SETTINGS =====\n"
 						+ "Mode: execution mode can be complete (only shows the last iteration) or step by step (shows and plots each epoch).\n"
 						+ "Hidden nodes per layer: indicates the number of hidden nodes en each layer, sepparated by commas.\n"
-						+ "Learning rate: value between 0.0 and 1.0 that determines the size of the step in each epoch of the training", "Help", JOptionPane.DEFAULT_OPTION);
+						+ "Learning rate: value between 0.0 and 1.0 that determines the size of the step in each epoch of the training.\n"
+						+ "\n\n Made by Antonio Lara Gutierrez, March 2022", "Help", JOptionPane.DEFAULT_OPTION);
 			}
 		});
 
